@@ -1,10 +1,11 @@
-Ce passage de Clean Architecture explique pourquoi les composants logiciels modernes doivent être indépendants et relocalisables. L'exemple du PDP-8 est ancien, mais l'idée est directement applicable à TypeScript/Angular/React.
+Ce passage de Clean Architecture explique pourquoi les composants logiciels modernes doivent être indépendants et relocalisables. L'exemple du PDP-8 est ancien, mais l'idée est directement applicable à TypeScript/Angular/React.
 
 Le point central est :
 
 Un composant doit pouvoir évoluer, être compilé, testé et remplacé sans obliger tout le reste du système à changer.
 
 1. Le problème à l'époque : tout était physiquement lié
+
 Dans l'ancien programme PDP-8, on avait quelque chose comme :
 
 Adresse mémoire
@@ -22,19 +23,22 @@ Adresse mémoire
      ├─────────────────────┤
      │ GETSTR              │
      └─────────────────────┘
+
 Le programme disait explicitement :
 
 *200
+
 Cela signifiait approximativement :
 
 « Charge mon programme à l'adresse mémoire 200. »
 
-Le problème était que les adresses étaient importantes pour le programme.
+Le problème était que les adresses étaient importantes pour le programme.
 
-Si GETSTR était à une certaine adresse, le programme devait savoir où il se trouvait.
+Si GETSTR était à une certaine adresse, le programme devait savoir où il se trouvait.
 
 2. Comment les bibliothèques fonctionnaient
-À cette époque, si tu voulais utiliser une fonction GETSTR, tu prenais son code source et tu le mettais avec ton application.
+
+À cette époque, si tu voulais utiliser une fonction GETSTR, tu prenais son code source et tu le mettais avec ton application.
 
 Conceptuellement :
 
@@ -47,6 +51,7 @@ PUTSTR.pdp8
 compilation
     ↓
 un seul programme
+
 En termes modernes, imagine :
 
 // application.ts
@@ -63,9 +68,11 @@ function main() {
   const value = getString();
   putString(value);
 }
+
 Tout est mélangé dans le même programme.
 
 3. Pourquoi c'était un problème ?
+
 À l'époque :
 
 la mémoire était très limitée ;
@@ -85,11 +92,13 @@ Bibliothèque de fonctions
 Encore une bibliothèque
 +
 Encore une bibliothèque
+
 le temps de compilation augmentait énormément.
 
-L'auteur explique donc qu'ils ont commencé à compiler les bibliothèques séparément.
+L'auteur explique donc qu'ils ont commencé à compiler les bibliothèques séparément.
 
 4. Première évolution : compiler séparément
+
 Au lieu de :
 
 Source application
@@ -99,6 +108,7 @@ Source library
    compilation
        ↓
     programme
+
 on fait :
 
 Library source
@@ -107,12 +117,12 @@ Library source
       ↓
 Library binary
 
-
 Application source
       ↓
   compilation
       ↓
 Application binary
+
 Puis au moment de l'exécution :
 
 Library binary
@@ -120,15 +130,19 @@ Library binary
 Application binary
       ↓
      RAM
+
 C'est déjà très proche de notre monde moderne.
 
 5. Le problème de l'adresse fixe
+
 Supposons que la bibliothèque soit chargée à :
 
 2000
+
 et que ton application soit chargée autour de :
 
 0000 → 1777
+
 On a donc :
 
 0000
@@ -144,6 +158,7 @@ On a donc :
 │ Library            │
 │                    │
 └────────────────────┘
+
 Ça fonctionne.
 
 Mais ton application grandit.
@@ -151,6 +166,7 @@ Mais ton application grandit.
 Elle dépasse :
 
 1777
+
 Elle commence donc à entrer dans l'espace de la bibliothèque.
 
 Tu arrives à une situation du genre :
@@ -170,11 +186,13 @@ Tu arrives à une situation du genre :
 ┌────────────────────┐
 │ Suite application  │
 └────────────────────┘
-L'application doit être coupée en morceaux pour éviter la bibliothèque.
+
+L'application doit être coupée en morceaux pour éviter la bibliothèque.
 
 C'est exactement le problème décrit dans le livre.
 
 6. Le concept important : Relocatability
+
 Le chapitre arrive donc à un concept important :
 
 Relocatability
@@ -186,6 +204,7 @@ Autrement dit :
 ❌ Library doit être à l'adresse 2000
 
 ✅ Library peut être chargée n'importe où
+
 Aujourd'hui, les systèmes modernes ont des mécanismes beaucoup plus sophistiqués pour résoudre cela.
 
 Mais le principe architectural reste intéressant :
@@ -193,6 +212,7 @@ Mais le principe architectural reste intéressant :
 Un composant ne doit pas être inutilement couplé à son environnement.
 
 7. Maintenant, faisons le parallèle avec TypeScript
+
 Imagine une application React/Angular.
 
 Tu as :
@@ -202,6 +222,7 @@ Application
 Auth
    ↓
 API
+
 Une mauvaise architecture pourrait être :
 
 export class LoginUseCase {
@@ -223,7 +244,8 @@ export class LoginUseCase {
     return response.data;
   }
 }
-Ici LoginUseCase connaît :
+
+Ici LoginUseCase connaît :
 
 Axios
 
@@ -242,9 +264,11 @@ LoginUseCase
    Axios
      ↓
 HTTP API
+
 Le composant métier est fortement dépendant de son environnement.
 
 8. Approche par composants indépendants
+
 On peut créer une interface :
 
 export interface AuthRepository {
@@ -253,6 +277,7 @@ export interface AuthRepository {
     password: string
   ): Promise<AuthUser>;
 }
+
 Le use case utilise uniquement cette interface :
 
 export class LoginUseCase {
@@ -272,6 +297,7 @@ export class LoginUseCase {
     );
   }
 }
+
 Maintenant :
 
              CORE
@@ -294,7 +320,8 @@ Maintenant :
 │ HTTP                         │
 │ API                          │
 └──────────────────────────────┘
-Le LoginUseCase ne sait même pas si tu utilises :
+
+Le LoginUseCase ne sait même pas si tu utilises :
 
 Axios
 fetch
@@ -303,7 +330,9 @@ GraphQL
 REST
 mock
 local database
+
 9. C'est ça l'idée moderne derrière le texte
+
 L'ancien monde avait :
 
 Application
@@ -311,9 +340,11 @@ Application
 Adresse mémoire précise
     ↓
 Library
+
 Le problème était :
 
 Application dépend physiquement de Library
+
 Dans une architecture moderne, on cherche plutôt :
 
 Application
@@ -323,6 +354,7 @@ Interface
 Adapter
     ↓
 Infrastructure
+
 Donc :
 
         BUSINESS
@@ -342,10 +374,13 @@ Donc :
             │
             ▼
        Infrastructure
+
 10. Exemple concret avec Angular 17
+
 Prenons une API de contrats.
 
 ❌ Mauvais couplage
+
 @Injectable()
 export class ContractService {
 
@@ -361,9 +396,11 @@ export class ContractService {
     );
   }
 }
+
 Ici ton domaine dépend directement d'Angular.
 
 ✅ Avec une interface
+
 Dans le domaine :
 
 export interface ContractRepository {
@@ -371,6 +408,7 @@ export interface ContractRepository {
     contractNumber: string
   ): Observable<Contract>;
 }
+
 Puis l'adapter Angular :
 
 @Injectable()
@@ -390,6 +428,7 @@ export class ContractRepositoryHttp
     );
   }
 }
+
 Ton use case :
 
 export class GetContractUseCase {
@@ -406,6 +445,7 @@ export class GetContractUseCase {
     );
   }
 }
+
 Maintenant :
 
 Angular HttpClient
@@ -421,7 +461,9 @@ ContractRepository
        │ depends on
        │
 GetContractUseCase
+
 11. Pourquoi l'auteur dit "independently developable"
+
 C'est probablement la partie la plus importante de ton extrait.
 
 Un composant bien conçu devrait pouvoir être développé indépendamment.
@@ -431,11 +473,13 @@ Par exemple :
 Team A
   ↓
 LoginUseCase
+
 et :
 
 Team B
   ↓
 AuthRepositoryBackend
+
 peuvent travailler séparément si le contrat est défini :
 
 interface AuthRepository {
@@ -444,9 +488,11 @@ interface AuthRepository {
     password: string
   ): Promise<AuthUser>;
 }
+
 L'équipe A n'a pas besoin de connaître l'implémentation de l'équipe B.
 
 12. Et ça améliore énormément les tests
+
 Grâce à l'interface :
 
 class FakeAuthRepository
@@ -464,6 +510,7 @@ class FakeAuthRepository
     };
   }
 }
+
 Test :
 
 describe('LoginUseCase', () => {
@@ -487,6 +534,7 @@ describe('LoginUseCase', () => {
   });
 
 });
+
 Le test ne nécessite :
 
 ❌ Backend
@@ -494,9 +542,11 @@ Le test ne nécessite :
 ❌ Axios
 ❌ Angular HttpClient
 ❌ Database
-Le composant métier est donc indépendamment testable.
+
+Le composant métier est donc indépendamment testable.
 
 13. Résumé du passage
+
 Le texte raconte en réalité l'évolution suivante :
 
 ANNÉES 1960
@@ -542,8 +592,10 @@ ARCHITECTURE MODERNE
             │
             ▼
       Infrastructure
+
 La leçon à retenir pour ton architecture TypeScript
-Quand tu construis ton architecture core / application / details :
+
+Quand tu construis ton architecture core / application / details :
 
 core
  ├── entities
@@ -555,8 +607,9 @@ details           │
  ├── http         │
  ├── storage      │
  └── repositories ─┘
-Le core dit ce dont il a besoin.
 
-L'adapter details explique comment le fournir.
+Le core dit ce dont il a besoin.
 
-C'est exactement l'esprit de l'Interface Adapter / Ports & Adapters, et c'est une des bases qui permettent d'obtenir des composants indépendamment développables, testables et remplaçables.
+L'adapter details explique comment le fournir.
+
+C'est exactement l'esprit de l'Interface Adapter / Ports & Adapters, et c'est une des bases qui permettent d'obtenir des composants indépendamment développables, testables et remplaçables.
